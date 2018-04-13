@@ -97,6 +97,11 @@
           if (event.keyCode !== 13) return
           this.openAddress(this.$.address.value)  
         })
+        if (window.location.hash !== '') {
+          let address = window.location.hash.substr(1, window.location.hash.length)
+          this.$.address.value = address
+          this.openAddress(address)
+        }
       }
 
       async openAddress(address) {
