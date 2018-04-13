@@ -1,4 +1,9 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-form/iron-form.html">
+<link rel="import" href="./bunsen-history.html">
 
 <dom-module id="bunsen-app">
   <template>
@@ -6,8 +11,20 @@
       :host {
         display: block;
       }
-      input {
-        width: 90%;
+      paper-input {
+        position: relative;
+        bottom: 25px;
+        height: 40px;
+        width: 100%;
+        background: #673ab7;
+        color: #FFF;
+        font-size: 1.5em;
+        --paper-input-container-color: #DDD;
+        --paper-input-container-focus-color: #FFF;
+        --paper-input-container-input-color: #FFF;
+      }
+      paper-button {
+        font-size: 1em;
       }
       iframe {
         width: 100%;
@@ -15,11 +32,20 @@
 
       }
     </style>
-    <form>
-      <input name="address" placeholder="dat://"></input> 
-      <button type="submit">go</button>
-    </form>
-    <iframe></iframe>
+      <table style="width: 100%">
+        <tr>
+          <td style="width: 100%">
+            <paper-input id="address" name="address" placeholder="dat://"></paper-input> 
+          </td>
+          <template is="dom-if" if="{{isFocused}}">
+          <td>
+            <paper-icon-button id="clear-address" on-tap="clearAddress" style="color: #FFF" icon="backspace"></paper-icon-button> 
+          </td>
+          </template>
+        </tr>
+      </table>
+      <iframe id="view"></iframe>
+      <bunsen-history id="history"></bunsen-history>
   </template>
 
   <script>
@@ -31,34 +57,84 @@
       static get is() { return 'bunsen-app'; }
       static get properties() {
         return {
-          prop1: {
-            type: String,
-            value: 'bunsen-app'
+          isFocused: {
+            type: Boolean,
+            value: false
           }
         };
       }
 
       async connectedCallback() {
         super.connectedCallback()
-        this.shadowRoot.querySelector('iframe').style.height = `${window.innerHeight - 30}px`
-        this.shadowRoot.querySelector('form').addEventListener('submit', async (event) => {
-          event.preventDefault()
-          // Allow fallback to online gateway.
-          try {
-            // Make sure local dat gateway is available.
-            let response = await fetch('http://localhost:3000')
-            let body = await response.text()
-            if (body === 'dat-gateway') {
-              const datArchiveAddress = this.shadowRoot.querySelector('input[name="address"]').value.replace('dat://', '')
-              this.shadowRoot.querySelector('iframe').src = `http://localhost:3000/${datArchiveAddress}/`
-            } else {
-              throw Error('localhost:3000 is not a dat gateway')
-            }
-          } catch (e) {
-            const datArchiveAddress = this.shadowRoot.querySelector('input[name="address"]').value.replace('dat://', '')
-            this.shadowRoot.querySelector('iframe').src = `http://gateway.mauve.moe:3000/${datArchiveAddress}/`
+        // Handle focus on dat url input.
+        this.$.address.addEventListener('focusin', () => {
+          const history = localStorage.getItem('history')
+          if (history) {
+            const historyItems = JSON.parse(history) 
+            this.$.history.items = historyItems
+          } else {
+            localStorage.setItem('history', '[]')
           }
+          this.isFocused = true
+          this.$.view.style.display = 'none'
+          this.$.history.style.display = 'block'
         })
+        this.$.address.addEventListener('focusout', () => {
+          // Delay so we can registe a tap to a historical link.
+          setTimout(() => {
+            this.isFocused = false 
+            this.$.view.style.display = 'block'
+            this.$.history.style.display = 'none'
+          }, 500)
+
+        })
+        // Remove spaces that keyboards add after `.` character.
+        this.$.address.addEventListener('keyup', async (event) => {
+          event.target.value = event.target.value.replace(' ', '')
+        })
+        // Listen for submit of new URL.
+        this.$.address.addEventListener('keyup', async (event) => {
+          if (event.keyCode !== 13) return
+          this.openAddress(this.$.address.value)  
+        })
+      }
+
+      async openAddress(address) {
+        let gatewayAddress = ''
+        // Allow fallback to online gateway.
+        try {
+          // Make sure local dat gateway is available.
+          let response = await fetch('http://localhost:3000')
+          let body = await response.text()
+          if (body === 'dat-gateway') {
+            gatewayAddress = `http://localhost:3000/${address.replace('dat://', '')}/`
+          } else {
+            throw Error('localhost:3000 is not a dat gateway')
+          }
+        } catch (e) {
+          gatewayAddress = `http://gateway.mauve.moe:3000/${address.replace('dat://', '')}/`
+        }
+        this.$.history.style.display = 'none'
+        this.$.view.style.display = 'block'
+        this.$.view.style.background = `white`
+        this.$.view.src = gatewayAddress 
+        // Fit iframe to window.
+        this.$.view.style.height = `${window.innerHeight - 30}px`
+        const history = localStorage.getItem('history')
+        if (history) {
+          const historyItems = JSON.parse(history) 
+          historyItems.unshift({ address: address })
+          this.$.history.items = historyItems
+          localStorage.setItem('history', JSON.stringify(historyItems))
+        } else {
+          localStorage.setItem('history', `[{"address": "${address}"}]`)
+        }
+      }
+
+      clearAddress() {
+        this.$.address.value = ''
+        // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
+        setTimeout(() => this.$.address.focus(), 200)
       }
     }
 
