@@ -98,10 +98,15 @@
           this.openAddress(this.$.address.value)  
         })
         if (window.location.hash !== '') {
+          this.hashHasChanged()
+        }
+        window.addEventListener('hashchange', () => this.hashHasChanged())
+      }
+
+      hashHasChanged() {
           let address = window.location.hash.substr(1, window.location.hash.length)
           this.$.address.value = address
           this.openAddress(address)
-        }
       }
 
       async openAddress(address) {
