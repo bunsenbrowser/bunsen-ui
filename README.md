@@ -5,24 +5,26 @@
 To serve up a local copy or develop:
 ```
 npm install -g polymer-cli@next
-git clone https://github.com/bunsenbrowser/bunsen-ui - fixme!!!
+git clone https://github.com/bunsenbrowser/bunsen-ui
 cd bunsen-ui
 npm install
 polymer serve --npm --module-resolution=node
 ```
 
-To use a local gateway as opposed to the public gateway fallback, run your own dat-gateway:
+To use a local gateway as opposed to the public gateway fallback, run the dat-gateway in bunsen
 ```
-git clone https://github.com/rjsteinert/dat-gateway
-cd dat-gateway
-git checkout enable-cors-and-200-response-at-root
+git clone https://github.com/bunsenbrowser/bunsen.git
+cd bunsen/www/nodejs_project
 npm install
-node bin.js
+node index.js
 ```
-
 
 ## Develop
-See `src/bunsen-app/bunsen-app.js` for the whole thing! It's a Polymer 3 Web Component.
+See `src/bunsen-app/bunsen-app.js` for the whole thing! It's a Polymer 3 Web Component. To run and view the app:
+
+```
+polymer serve
+```
 
 polymer.json has some switches. They do the same as this:
 
