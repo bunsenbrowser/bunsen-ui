@@ -14,7 +14,7 @@ polymer serve --npm --module-resolution=node
 To use a local gateway as opposed to the public gateway fallback, run the dat-gateway in bunsen
 ```
 git clone https://github.com/bunsenbrowser/bunsen.git
-cd bunsen/www/nodejs_project
+cd bunsen/www/nodejs-project
 npm install
 node index.js
 ```
@@ -23,6 +23,7 @@ node index.js
 See `src/bunsen-app/bunsen-app.js` for the whole thing! It's a Polymer 3 Web Component. To run and view the app:
 
 ```
+cd bunsen-ui
 polymer serve
 ```
 
