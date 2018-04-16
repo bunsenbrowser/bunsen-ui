@@ -13,6 +13,7 @@ class BunsenDats extends PolymerElement {
     <style>
       :host {
         display: block;
+        margin: 5px;
       }
       a:link,
       a:visited,

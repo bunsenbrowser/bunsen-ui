@@ -46,10 +46,10 @@ class BunsenApp extends PolymerElement {
         margin-top: 10px;
       }
     </style>
-      <table style="width: 100%">
+      <table style="width: 100%;">
         <tbody><tr>
           <td style="width: 100%">
-            <paper-input id="address" name="address" placeholder="dat://"></paper-input> 
+            <paper-input id="address" name="address" style="margin: 0px 5px;" placeholder="dat://"></paper-input> 
           </td>
           <template is="dom-if" if="{{isFocused}}">
           <td>
@@ -63,11 +63,11 @@ class BunsenApp extends PolymerElement {
           </template>
         </tr>
       </tbody></table>
-      <iframe id="view"></iframe>
+      <iframe id="view" style="width:100%"></iframe>
       <bunsen-dats id="datSites"></bunsen-dats>
       <div id="peerage">
-      <p>Peers</p>
-      <div id="peers"></div>
+      <p style="margin: 5px">Peers</p>
+      <div id="peers" style="margin: 5px"></div>
     </div>
 
 `;
