@@ -55,6 +55,11 @@ class BunsenApp extends PolymerElement {
           <td>
             <paper-icon-button id="clear-address" on-tap="clearAddress" style="color: #FFF" icon="backspace"></paper-icon-button> 
           </td>
+          <template is="dom-if" if="{{currentAddress}}">
+          <td>
+            <paper-icon-button id="refresh" on-tap="refresh" style="color: #FFF" icon="refresh"></paper-icon-button> 
+          </td>
+          </template>
           </template>
         </tr>
       </tbody></table>
@@ -85,15 +90,6 @@ class BunsenApp extends PolymerElement {
       console.log("focusin")
         this.showDatSites();
     })
-    this.$.address.addEventListener('focusout', () => {
-      // Delay so we can registe a tap to a historical link.
-      setTimeout(() => {
-        this.isFocused = false 
-        this.$.view.style.display = 'block'
-        this.$.datSites.style.display = 'none'
-      }, 500)
-
-    })
     // Remove spaces that keyboards add after `.` character.
     this.$.address.addEventListener('keyup', async (event) => {
       event.target.value = event.target.value.replace(' ', '')
@@ -106,6 +102,11 @@ class BunsenApp extends PolymerElement {
     if (window.location.hash !== '') {
       this.hashHasChanged()
     }
+    setInterval(() => {
+      // Fit iframe to window.
+      this.$.view.style.height = `${window.innerHeight - 140}px`
+    }, 500)
+
     window.addEventListener('hashchange', () => this.hashHasChanged())
       this.socket2me();
   }
@@ -121,6 +122,11 @@ class BunsenApp extends PolymerElement {
       this.isFocused = true
       this.$.view.style.display = 'none'
       this.$.datSites.style.display = 'block'
+      
+  }
+
+  refresh() {
+    this.openAddress(this.currentAddress)
   }
 
   hashHasChanged() {
@@ -130,6 +136,8 @@ class BunsenApp extends PolymerElement {
   }
 
   async openAddress(address) {
+    this.currentAddress = address
+
     let gatewayAddress = ''
     // Allow fallback to online gateway.
     try {
@@ -148,8 +156,7 @@ class BunsenApp extends PolymerElement {
     this.$.view.style.display = 'block'
     this.$.view.style.background = `white`
     this.$.view.src = gatewayAddress 
-    // Fit iframe to window.
-    this.$.view.style.height = `${window.innerHeight - 30}px`
+    this.$.address.blur()
     const datSites = localStorage.getItem('datSites')
     if (datSites) {
       const datSiteItems = JSON.parse(datSites)
@@ -175,7 +182,10 @@ class BunsenApp extends PolymerElement {
   clearAddress() {
     this.$.address.value = ''
     // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
-    setTimeout(() => this.$.address.focus(), 200)
+    setTimeout(() => {
+      this.$.address.focus()
+      this.showDatSites()
+    }, 200)
   }
 
   socket2me() {
