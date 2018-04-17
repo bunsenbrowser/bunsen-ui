@@ -23,7 +23,6 @@ class BunsenApp extends PolymerElement {
         position: relative;
         bottom: 25px;
         height: 40px;
-        width: 100%;
         background: #673ab7;
         color: #FFF;
         font-size: 1.5em;
@@ -49,7 +48,7 @@ class BunsenApp extends PolymerElement {
       <table style="width: 100%;">
         <tbody><tr>
           <td style="width: 100%">
-            <paper-input id="address" name="address" style="margin: 0px 5px;" placeholder="dat://"></paper-input> 
+            <paper-input id="address" name="address" style="margin: 0px 10px;" placeholder="dat://"></paper-input> 
           </td>
           <template is="dom-if" if="{{isFocused}}">
           <td>
