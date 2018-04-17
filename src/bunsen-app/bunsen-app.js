@@ -103,11 +103,11 @@ class BunsenApp extends PolymerElement {
     }
     setInterval(() => {
       // Fit iframe to window.
-      this.$.view.style.height = `${window.innerHeight - 140}px`
+      this.$.view.style.height = `${window.innerHeight - 47}px`
     }, 500)
 
     window.addEventListener('hashchange', () => this.hashHasChanged())
-      this.socket2me();
+    this.socket2me();
   }
 
   showDatSites() {
@@ -121,6 +121,7 @@ class BunsenApp extends PolymerElement {
       this.isFocused = true
       this.$.view.style.display = 'none'
       this.$.datSites.style.display = 'block'
+      this.$.peerage.style.display = 'block'
       
   }
 
@@ -152,6 +153,7 @@ class BunsenApp extends PolymerElement {
       gatewayAddress = `http://gateway.mauve.moe:3000/${address.replace('dat://', '')}/`
     }
     this.$.datSites.style.display = 'none'
+    this.$.peerage.style.display = 'none'
     this.$.view.style.display = 'block'
     this.$.view.style.background = `white`
     this.$.view.src = gatewayAddress 
