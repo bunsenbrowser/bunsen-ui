@@ -23,7 +23,6 @@ class BunsenApp extends PolymerElement {
         position: relative;
         bottom: 25px;
         height: 40px;
-        width: 100%;
         background: #673ab7;
         color: #FFF;
         font-size: 1.5em;
@@ -46,23 +45,28 @@ class BunsenApp extends PolymerElement {
         margin-top: 10px;
       }
     </style>
-      <table style="width: 100%">
+      <table style="width: 100%;">
         <tbody><tr>
           <td style="width: 100%">
-            <paper-input id="address" name="address" placeholder="dat://"></paper-input> 
+            <paper-input id="address" name="address" style="margin: 0px 10px;" placeholder="dat://"></paper-input> 
           </td>
           <template is="dom-if" if="{{isFocused}}">
           <td>
             <paper-icon-button id="clear-address" on-tap="clearAddress" style="color: #FFF" icon="backspace"></paper-icon-button> 
           </td>
+          <template is="dom-if" if="{{currentAddress}}">
+          <td>
+            <paper-icon-button id="refresh" on-tap="refresh" style="color: #FFF" icon="refresh"></paper-icon-button> 
+          </td>
+          </template>
           </template>
         </tr>
       </tbody></table>
-      <iframe id="view"></iframe>
+      <iframe id="view" style="width:100%"></iframe>
       <bunsen-dats id="datSites"></bunsen-dats>
       <div id="peerage">
-      <p>Peers</p>
-      <div id="peers"></div>
+      <p style="margin: 5px">Peers</p>
+      <div id="peers" style="margin: 5px"></div>
     </div>
 
 `;
@@ -85,15 +89,6 @@ class BunsenApp extends PolymerElement {
       console.log("focusin")
         this.showDatSites();
     })
-    this.$.address.addEventListener('focusout', () => {
-      // Delay so we can registe a tap to a historical link.
-      setTimeout(() => {
-        this.isFocused = false 
-        this.$.view.style.display = 'block'
-        this.$.datSites.style.display = 'none'
-      }, 500)
-
-    })
     // Remove spaces that keyboards add after `.` character.
     this.$.address.addEventListener('keyup', async (event) => {
       event.target.value = event.target.value.replace(' ', '')
@@ -106,8 +101,13 @@ class BunsenApp extends PolymerElement {
     if (window.location.hash !== '') {
       this.hashHasChanged()
     }
+    setInterval(() => {
+      // Fit iframe to window.
+      this.$.view.style.height = `${window.innerHeight - 47}px`
+    }, 500)
+
     window.addEventListener('hashchange', () => this.hashHasChanged())
-      this.socket2me();
+    this.socket2me();
   }
 
   showDatSites() {
@@ -121,6 +121,12 @@ class BunsenApp extends PolymerElement {
       this.isFocused = true
       this.$.view.style.display = 'none'
       this.$.datSites.style.display = 'block'
+      this.$.peerage.style.display = 'block'
+      
+  }
+
+  refresh() {
+    this.openAddress(this.currentAddress)
   }
 
   hashHasChanged() {
@@ -130,6 +136,8 @@ class BunsenApp extends PolymerElement {
   }
 
   async openAddress(address) {
+    this.currentAddress = address
+
     let gatewayAddress = ''
     // Allow fallback to online gateway.
     try {
@@ -145,11 +153,11 @@ class BunsenApp extends PolymerElement {
       gatewayAddress = `http://gateway.mauve.moe:3000/${address.replace('dat://', '')}/`
     }
     this.$.datSites.style.display = 'none'
+    this.$.peerage.style.display = 'none'
     this.$.view.style.display = 'block'
     this.$.view.style.background = `white`
     this.$.view.src = gatewayAddress 
-    // Fit iframe to window.
-    this.$.view.style.height = `${window.innerHeight - 30}px`
+    this.$.address.blur()
     const datSites = localStorage.getItem('datSites')
     if (datSites) {
       const datSiteItems = JSON.parse(datSites)
@@ -175,7 +183,10 @@ class BunsenApp extends PolymerElement {
   clearAddress() {
     this.$.address.value = ''
     // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
-    setTimeout(() => this.$.address.focus(), 200)
+    setTimeout(() => {
+      this.$.address.focus()
+      this.showDatSites()
+    }, 200)
   }
 
   socket2me() {
