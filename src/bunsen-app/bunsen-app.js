@@ -1,6 +1,6 @@
 import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
 import '@polymer/paper-input/paper-input.js';
-import '@polymer/paper-icon-button/paper-icon-button.js';
+import '@polymer/paper-button/paper-button.js';
 import '@polymer/iron-icons/iron-icons.js';
 import '@polymer/iron-form/iron-form.js';
 import './bunsen-dats.js';
@@ -44,6 +44,15 @@ class BunsenApp extends PolymerElement {
         color: #FFF;
         margin-top: 10px;
       }
+      #installBanner {
+        position: fixed;
+        bottom: 0px;
+        right: 0px;
+        width: 100%;
+        height: 75px;
+        color: #333;
+        background: white;
+      }
     </style>
       <table style="width: 100%;">
         <tbody><tr>
@@ -67,6 +76,18 @@ class BunsenApp extends PolymerElement {
       <div id="peerage">
       <p style="margin: 5px">Peers</p>
       <div id="peers" style="margin: 5px"></div>
+      <div id="installBanner">
+        <table>
+          <tr>
+            <td style="padding: 13px 5px 0px">
+              Browse the P2P Dat web with Bunsen for Android 
+            </td>
+            <td>
+              <paper-button raised style="position: relative; top: 12px;"><iron-icon icon="file-download"></iron-icon>download</paper-button>
+            </td>
+          </tr>
+        </table>
+      </div>
     </div>
 
 `;
@@ -84,6 +105,9 @@ class BunsenApp extends PolymerElement {
 
   async connectedCallback() {
     super.connectedCallback()
+    window.addEventListener('hashchange', () => this.hashHasChanged())
+    this.gateway = `${window.location.protocol}//${window.location.host}`
+    this.socket2me();
     // Handle focus on dat url input.
     this.$.address.addEventListener('focusin', () => {
       console.log("focusin")
@@ -101,13 +125,39 @@ class BunsenApp extends PolymerElement {
     if (window.location.hash !== '') {
       this.hashHasChanged()
     }
+    // Fit iframe to window.
     setInterval(() => {
-      // Fit iframe to window.
       this.$.view.style.height = `${window.innerHeight - 47}px`
     }, 500)
+    // Adjustments for browsers that are not Bunsen.
+    if (!navigator.userAgent.includes('BunsenBrowser')) {
+      // Alert folks who are not using Bunsen.
+      if (!localStorage.getItem('suppressInstallBanner')) {
+        this.showInstallBanner = true
+      }
+      try {
+        // Register to handle dat:// links.
+        navigator.registerProtocolHandler("dat",
+          window.location+'?uri=%s',
+          "Bunsen Browser");
+      } catch (err) {
+        // Transform dat:// Anchor tags to point at gateway.
+        setInterval(() => {
+          this.$.view.contentDocument.querySelectorAll('a').forEach(anchorEl => {
+            let href = anchorEl.getAttribute('href')
+            if (href && href.substr(0,6) === 'dat://') {
+              anchorEl.setAttribute('href', `${this.gateway}/${href.substr(6, href.length)}/`)
+            }
+          }, 500)
+        })
+      }
 
-    window.addEventListener('hashchange', () => this.hashHasChanged())
-    this.socket2me();
+    }
+
+  }
+
+  suppressInstallBanner() {
+    localStorage.setItem('suppressInstallBanner', true)
   }
 
   showDatSites() {
