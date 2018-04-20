@@ -1,47 +1,33 @@
-# bunsen-ui
+# \<bunsen\>
 
-## Getting Started.
 
-To serve up a local copy or develop:
-```
-npm install -g polymer-cli@next
-git clone https://github.com/bunsenbrowser/bunsen-ui
-cd bunsen-ui
-npm install
-polymer serve --npm --module-resolution=node
-```
 
-To use a local gateway as opposed to the public gateway fallback, run the dat-gateway in bunsen
-```
-git clone https://github.com/bunsenbrowser/bunsen.git
-cd bunsen/www/nodejs_project
-npm install
-node index.js
-```
+## Install the Polymer-CLI
 
-## Develop
-See `src/bunsen-app/bunsen-app.js` for the whole thing! It's a Polymer 3 Web Component. To run and view the app:
+First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polymer-cli) installed. Then run `polymer serve` to serve your application locally.
+
+## Viewing Your Application
 
 ```
-polymer serve
+$ polymer serve
 ```
 
-polymer.json has some switches. They do the same as this:
+## Building Your Application
 
 ```
-polymer serve --npm --module-resolution=node
-
+$ polymer build
 ```
 
-To create a build:
+This will create builds of your application in the `build/` directory, optimized to be served in production. You can then serve the built versions by giving `polymer serve` a folder to serve from:
 
 ```
-polymer build
+$ polymer serve build/default
 ```
 
-websocket-stream@latest.js gets bundled into shared_bundle_1.js. It is generated using https://wzrd.in/standalone/websocket-stream@latest .
-Other users have reported issues getting websocket-stream working with es6 imports. It is avaialble in Bunsen as the global websocketStream.
+## Running Tests
 
-To publish the build, remember to cd to build/es6 and then run `dat share`.
+```
+$ polymer test
+```
 
-
+Your application is already set up to be tested via [web-component-tester](https://github.com/Polymer/web-component-tester). Run `polymer test` to run your application's test suite locally.

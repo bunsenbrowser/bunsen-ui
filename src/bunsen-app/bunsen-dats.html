@@ -1,0 +1,52 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<dom-module id="bunsen-dats">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      a:link,
+      a:visited,
+      a:hover,
+      a:focus,
+      a:active {
+        color: white;
+        font-size: 1.5em;
+      }
+    </style>
+
+    <table style="width: 100%">
+      <template is="dom-repeat" items="{{items}}">
+      <tr>
+        <td style="width: 100%; padding: 0px 5px;">
+          <a href="{{item.address}}">{{item.address}}</a>
+        </td>
+      </tr>
+      </template>
+    </table>
+
+
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class BunsenDats extends Polymer.Element {
+      static get is() { return 'bunsen-dats'; }
+      static get properties() {
+        return {
+          items: {
+            type: Array,
+            value: []
+          }
+        };
+      }
+
+    }
+
+    window.customElements.define(BunsenDats.is, BunsenDats);
+  </script>
+</dom-module>

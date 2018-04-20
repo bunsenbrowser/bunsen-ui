@@ -1,14 +1,4 @@
 {
-  "npm": true,
-  "moduleResolution": "node",
-  "builds": [
-    {
-      "name": "es6",
-      "bundle": {
-        "inlineScripts": false
-      }
-    }
-  ],
   "lint": {
     "rules": [
       "polymer-2"

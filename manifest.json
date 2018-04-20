@@ -1,6 +1,6 @@
 {
-  "name": "bunsen-app",
-  "short_name": "bunsen-app",
+  "name": "bunsen",
+  "short_name": "bunsen",
   "start_url": "/",
   "display": "standalone"
 }
