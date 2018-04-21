@@ -197,9 +197,7 @@
       async openAddress(address) {
         this.currentAddress = address
         this.$.address.value = address
-        // Remove protocol and all slashes to be used in gateway address.
-        let gatewayFragment = address.replace('dat://', '').replace('/', '')
-        this.$.view.src = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
+        
         // Show some stuff, hide some stuff. @TODO Make this simpler.
         this.$.datSites.style.display = 'none'
         this.$.peerage.style.display = 'none'
@@ -228,6 +226,14 @@
         } else {
           localStorage.setItem('datSites', `[{"address": "${address}"}]`)
         }
+        // Remove protocol and all slashes to be used in gateway address.
+        let gatewayFragment = address.replace('dat://', '').replace('/', '')
+        //this.$.view.src = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
+        this.$.view.contentWindow.location = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
+        // Hack for iframe implementation in Android WebView. I have no idea why this works.
+        setTimeout(() => {
+          this.$.view.contentWindow.location = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
+        }, 1000)
       }
 
       clearAddress() {
