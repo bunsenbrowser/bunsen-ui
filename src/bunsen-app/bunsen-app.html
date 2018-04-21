@@ -118,11 +118,7 @@
         this.$.address.addEventListener('keyup', async (event) => {
           event.target.value = event.target.value.replace(' ', '')
         })
-        if (window.location.search.includes('?uri=')) {
-          let frag = decodeURIComponent(window.location.search)
-          let datAddress = frag.substr(5, frag.length)
-          this.openAddress(datAddress)  
-        }
+        
         // Listen for submit of new URL.
         this.$.address.addEventListener('keyup', async (event) => {
           if (event.keyCode !== 13) return
@@ -161,6 +157,15 @@
 
         }
 
+        // Open an address to get started.
+        if (window.location.search.includes('?uri=')) {
+          let frag = decodeURIComponent(window.location.search)
+          let datAddress = frag.substr(5, frag.length)
+          this.openAddress(datAddress)  
+        } else {
+          this.openAddress('dat://exploder-creationix.hashbase.io/')
+        }
+
       }
 
       suppressInstallBanner() {
@@ -194,6 +199,7 @@
 
       async openAddress(address) {
         this.currentAddress = address
+        this.$.address.value = address
 
         let gatewayAddress = ''
         // Allow fallback to online gateway.
