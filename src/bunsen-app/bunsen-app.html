@@ -232,11 +232,15 @@
         }
         // Remove protocol and all slashes to be used in gateway address.
         let gatewayTarget = address.replace('dat://', '').replace('/', '')
-        // Remove the base32 of bunsen.hashbase.io
+        // Remove the base32 of bunsen.hashbase.io if the subdomain is base32 length, otherwise we're 
+        // probbaly not running in a gateway with base32 subdomain support.
         let gatewayParts = window.location.host.split('.')
-        gatewayParts.shift()
+        if (gatewayParts[0].length === 52) {
+          gatewayParts.shift()
+        }
         let gatewayRoot = gatewayParts.join('.')
         let gatewayUrlWithTarget = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
+        this.$.view.src = gatewayUrlWithTarget 
         this.$.view.contentWindow.location = gatewayUrlWithTarget 
         setTimeout(() => {
           this.$.view.contentWindow.location = gatewayUrlWithTarget
