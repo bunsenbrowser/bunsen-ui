@@ -142,6 +142,8 @@
               "Bunsen Browser");
           } catch (err) {
             // Transform dat:// Anchor tags to point at gateway.
+            // @TODO Remove me. No longer possible because dat sites are on seperate subdomains.
+            /*
             setInterval(() => {
               this.$.view.contentDocument.querySelectorAll('a').forEach(anchorEl => {
                 let href = anchorEl.getAttribute('href')
@@ -150,17 +152,19 @@
                 }
               }, 500)
             })
+            */
           }
 
         }
 
         // Open an address to get started.
+        // Detect case of Firefox registered protocol handling.
         if (window.location.search.includes('?uri=')) {
           let frag = decodeURIComponent(window.location.search)
           let datAddress = frag.substr(5, frag.length)
           this.openAddress(datAddress)  
         } else {
-          this.openAddress('dat://exploder-creationix.hashbase.io')
+          this.openAddress('dat://home-bunsen.hashbase.io')
         }
 
       }
@@ -198,7 +202,7 @@
         this.currentAddress = address
         this.$.address.value = address
         
-        // Show some stuff, hide some stuff. @TODO Make this simpler.
+        // Show some stuff, hide some stuff. @TODO Make this simpler, too much juggling.
         this.$.datSites.style.display = 'none'
         this.$.peerage.style.display = 'none'
         this.$.view.style.display = 'block'
@@ -227,12 +231,15 @@
           localStorage.setItem('datSites', `[{"address": "${address}"}]`)
         }
         // Remove protocol and all slashes to be used in gateway address.
-        let gatewayFragment = address.replace('dat://', '').replace('/', '')
-        //this.$.view.src = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
-        this.$.view.contentWindow.location = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
-        // Hack for iframe implementation in Android WebView. I have no idea why this works.
+        let gatewayTarget = address.replace('dat://', '').replace('/', '')
+        // Remove the base32 of bunsen.hashbase.io
+        let gatewayParts = window.location.host.split('.')
+        gatewayParts.shift()
+        let gatewayRoot = gatewayParts.join('.')
+        let gatewayUrlWithTarget = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
+        this.$.view.contentWindow.location = gatewayUrlWithTarget 
         setTimeout(() => {
-          this.$.view.contentWindow.location = `${window.location.protocol}//${window.location.host}/${gatewayFragment}/`
+          this.$.view.contentWindow.location = gatewayUrlWithTarget
         }, 1000)
       }
 
