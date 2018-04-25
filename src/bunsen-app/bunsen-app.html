@@ -230,21 +230,23 @@
         } else {
           localStorage.setItem('datSites', `[{"address": "${address}"}]`)
         }
-        // Remove protocol and all slashes to be used in gateway address.
-        let gatewayTarget = address.replace('dat://', '').replace('/', '')
-        // Remove the base32 of bunsen.hashbase.io if the subdomain is base32 length, otherwise we're 
-        // probbaly not running in a gateway with base32 subdomain support.
-        let gatewayParts = window.location.host.split('.')
-        if (gatewayParts[0].length === 52) {
-          gatewayParts.shift()
-        }
-        let gatewayRoot = gatewayParts.join('.')
-        let gatewayUrlWithTarget = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
-        this.$.view.src = gatewayUrlWithTarget 
-        this.$.view.contentWindow.location = gatewayUrlWithTarget 
-        setTimeout(() => {
-          this.$.view.contentWindow.location = gatewayUrlWithTarget
-        }, 1000)
+        // Check if the target uses Dat protocol, otherwise it's something weird like http ;).
+        let targetUrl = ''
+        if (address.substr(0,4) === 'dat:') {
+          // Remove protocol and all slashes to be used in gateway address.
+          let gatewayTarget = address.replace('dat://', '').replace('/', '')
+          // Remove the base32 of bunsen.hashbase.io if the subdomain is base32 length, otherwise we're 
+          // probbaly not running in a gateway with base32 subdomain support.
+          let gatewayParts = window.location.host.split('.')
+          if (gatewayParts[0].length === 52) {
+            gatewayParts.shift()
+          }
+          let gatewayRoot = gatewayParts.join('.')
+          targetUrl = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
+        } else {
+          targetUrl = address
+        } 
+        this.$.view.src = targetUrl 
       }
 
       clearAddress() {
