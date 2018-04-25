@@ -121,9 +121,7 @@
           if (event.keyCode !== 13) return
           this.openAddress(this.$.address.value)  
         })
-        if (window.location.hash !== '') {
-          this.hashHasChanged()
-        }
+        
         // Fit iframe to window.
         setInterval(() => {
           this.$.view.style.height = `${window.innerHeight - 47}px`
@@ -142,7 +140,7 @@
               "Bunsen Browser");
           } catch (err) {
             // Transform dat:// Anchor tags to point at gateway.
-            // @TODO Remove me. No longer possible because dat sites are on seperate subdomains.
+            // @TODO Remove me or check for non-subdomain supported gateway. No longer possible because dat sites are on seperate subdomains.
             /*
             setInterval(() => {
               this.$.view.contentDocument.querySelectorAll('a').forEach(anchorEl => {
@@ -163,6 +161,8 @@
           let frag = decodeURIComponent(window.location.search)
           let datAddress = frag.substr(5, frag.length)
           this.openAddress(datAddress)  
+        } else if (window.location.hash !== '') {
+          this.hashHasChanged()
         } else {
           this.openAddress('dat://home-bunsen.hashbase.io')
         }
