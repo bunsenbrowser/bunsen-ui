@@ -20,7 +20,8 @@
       <template is="dom-repeat" items="{{items}}">
       <tr>
         <td style="width: 100%; padding: 0px 5px;">
-          <a href="{{item.address}}">{{item.address}}</a>
+          <dom-if if="[[item.title]]"><template><a href="{{item.address}}">{{item.title}}</a></template></dom-if>
+          <dom-if if="[[!item.title]]"><template><a href="{{item.address}}">{{item.address}}</a></template></dom-if>
         </td>
       </tr>
       </template>

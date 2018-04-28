@@ -49,7 +49,10 @@
             <paper-icon-button id="clear-address" on-tap="clearAddress" style="color: #FFF" icon="backspace"></paper-icon-button> 
           </td>
           <td>
-            <paper-icon-button id="refresh" on-tap="refresh" style="color: #FFF" icon="refresh"></paper-icon-button> 
+            <paper-icon-button id="dat-command" on-tap="datCreateWiki" style="color: #FFF" icon="add-circle"></paper-icon-button>
+          </td>
+          <td>
+            <paper-icon-button id="refresh" on-tap="refresh" style="color: #FFF" icon="refresh"></paper-icon-button>
           </td>
         </tr>
       </tbody>
@@ -192,6 +195,63 @@
         this.openAddress(this.currentAddress)
       }
 
+
+        async datCreateWiki() {
+
+            console.log('Forking wiki')
+
+            this.datForkArchive('dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1', 'My Wiki')
+
+        }
+
+      async datForkArchive(url, title) {
+
+          console.log('Forking archive')
+
+          const archive = await DatArchive.fork(url)
+
+          console.log(`Opened, ${archive.url}`)
+          this.saveDatSite(archive.url, title, url);
+
+          console.log('Forked dat')
+
+          const dir = await archive.readdir('/')
+
+          console.log('Read dir:', dir)
+
+          const readContents = await archive.readFile('/index.html')
+
+          console.log('Read contents', readContents)
+      }
+
+      async datCreateArchive() {
+          // this.openAddress(this.currentAddress)
+          const contents = `
+            <title>Gateway Test</title>
+            <p>Hello World!</p>
+            `
+          console.log('Creating new archive')
+
+          const archive = await DatArchive.create({
+              title: 'Gateway test',
+              description: 'This is testing out creating new archives through the dat-gateway'
+          })
+
+          console.log(`Opened, ${archive.url}`)
+
+          await archive.writeFile('index.html', contents)
+
+          console.log('Wrote index.html')
+
+          const dir = await archive.readdir('/')
+
+          console.log('Read dir:', dir)
+
+          const readContents = await archive.readFile('/index.html')
+
+          console.log('Read contents', readContents)
+      }
+
       hashHasChanged() {
           let address = window.location.hash.substr(1, window.location.hash.length)
           this.$.address.value = address
@@ -209,28 +269,8 @@
         this.$.view.style.background = `white`
         // Remove focus from address bar.
         this.$.address.blur()
-        // Save this address into history.
-        const datSites = localStorage.getItem('datSites')
-        if (datSites) {
-          const datSiteItems = JSON.parse(datSites)
-          let hasAddress = false
-          for (var key in datSiteItems) {
-            if (datSiteItems.hasOwnProperty(key)) {
-                console.log(key + " -> " + JSON.stringify(datSiteItems[key]));
-                if (datSiteItems[key].address === address) {
-                    hasAddress = true
-                }
-            }
-          }
-          if (!hasAddress) {
-              datSiteItems.unshift({ address: address })
-              this.$.datSites.items = datSiteItems
-              localStorage.setItem('datSites', JSON.stringify(datSiteItems))
-          }
-        } else {
-          localStorage.setItem('datSites', `[{"address": "${address}"}]`)
-        }
-        // Check if the target uses Dat protocol, otherwise it's something weird like http ;).
+        this.saveDatSite(address, null, null);
+          // Check if the target uses Dat protocol, otherwise it's something weird like http ;).
         let targetUrl = ''
         if (address.substr(0,4) === 'dat:') {
           // Remove protocol and all slashes to be used in gateway address.
@@ -249,7 +289,31 @@
         this.$.view.src = targetUrl 
       }
 
-      clearAddress() {
+        saveDatSite(address, title, parent) {
+        // Save this address into datSites.
+            const datSites = localStorage.getItem('datSites')
+            if (datSites) {
+                const datSiteItems = JSON.parse(datSites)
+                let hasAddress = false
+                for (var key in datSiteItems) {
+                    if (datSiteItems.hasOwnProperty(key)) {
+                        console.log(key + " -> " + JSON.stringify(datSiteItems[key]));
+                        if (datSiteItems[key].address === address) {
+                            hasAddress = true
+                        }
+                    }
+                }
+                if (!hasAddress) {
+                    datSiteItems.unshift({address: address, title:title, parent:parent})
+                    this.$.datSites.items = datSiteItems
+                    localStorage.setItem('datSites', JSON.stringify(datSiteItems))
+                }
+            } else {
+                localStorage.setItem('datSites', `[{"address": "${address}", "title": "${title}", "parent": "${parent}"]`)
+            }
+        }
+
+        clearAddress() {
         this.$.address.value = ''
         // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
         setTimeout(() => {
