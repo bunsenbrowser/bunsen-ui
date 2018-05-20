@@ -1,0 +1,44 @@
+{
+  "name": "bunsen-ui-server",
+  "version": "1.0.0",
+  "description": "Add support for the DatArchive API to bunsen",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-server": "browserify --debug -r fs:graceful-fs -s DemoServer -e ./server/index.js > ./dat-polyfill-server.js ",
+    "watch-server": "watchify -v --debug -r fs:graceful-fs -s DemoServer -e ./server/index.js -o ./dat-polyfill-server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bunsenbrowser/bunsen-ui.git"
+  },
+  "keywords": [
+    "dat",
+    "archive",
+    "polyfill",
+    "beaker"
+  ],
+  "author": "bunsenbrowser",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bunsenbrowser/bunsen-ui/issues"
+  },
+  "homepage": "https://github.com/bunsenbrowser/bunsen-ui#readme",
+  "dependencies": {
+    "frame-rpc": "^1.4.0",
+    "random-access-file": "^2.0.1",
+    "random-access-network": "^1.0.5",
+    "random-access-storage": "^1.1.1",
+    "random-access-idb": "https://github.com/random-access-storage/random-access-idb"
+  },
+  "devDependencies": {
+    "browserify": "^16.2.0",
+    "eslint": "^4.19.1",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "watchify": "^3.11.0"
+  }
+}

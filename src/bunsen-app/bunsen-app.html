@@ -49,7 +49,7 @@
             <paper-icon-button id="clear-address" on-tap="clearAddress" style="color: #FFF" icon="backspace"></paper-icon-button> 
           </td>
           <td>
-            <paper-icon-button id="dat-command" on-tap="datCreateWiki" style="color: #FFF" icon="add-circle"></paper-icon-button>
+            <paper-icon-button id="dat-command" on-tap="addDat" style="color: #FFF" icon="add-circle"></paper-icon-button>
           </td>
           <td>
             <paper-icon-button id="refresh" on-tap="refresh" style="color: #FFF" icon="refresh"></paper-icon-button>
@@ -86,66 +86,109 @@
      * @polymer
      */
     class BunsenApp extends Polymer.Element {
-      static get is() { return 'bunsen-app'; }
-      static get properties() {
-        return {
-          isFocused: {
-            type: Boolean,
-            value: false
-          },
-          showInstallBanner: {
-            type: Boolean,
-            value: false
-          },
-          currentAddress: {
-            type: String,
-            value: '' 
-          }
-        };
-      }
+        static get is() {
+            return 'bunsen-app';
+        }
 
-      async connectedCallback() {
-        super.connectedCallback()
-        window.addEventListener('hashchange', () => this.hashHasChanged())
-        this.gateway = `${window.location.protocol}//${window.location.host}`
-        console.log("Using the DatArchive polyfill?")
-        this.socket2me();
-        // Handle focus on dat url input.
-        this.$.address.addEventListener('focusin', () => {
-          console.log("focusin")
-            this.showDatSites();
-        })
-        // Remove spaces that keyboards add after `.` character.
-        this.$.address.addEventListener('keyup', async (event) => {
-          event.target.value = event.target.value.replace(' ', '')
-        })
-        
-        // Listen for submit of new URL.
-        this.$.address.addEventListener('keyup', async (event) => {
-          if (event.keyCode !== 13) return
-          this.openAddress(this.$.address.value)  
-        })
-        
-        // Fit iframe to window.
-        setInterval(() => {
-          this.$.view.style.height = `${window.innerHeight - 47}px`
-        }, 500)
-        // Adjustments for browsers that are not Bunsen.
-        if (!navigator.userAgent.includes('BunsenBrowser')) {
-          // Alert folks who are not using Bunsen.
-          if (!localStorage.getItem('suppressInstallBanner')) {
-            // @TODO Show a hide button to set this to false.
-            //this.showInstallBanner = true
-          }
-          try {
-            // Register to handle dat:// links.
-            navigator.registerProtocolHandler("dat",
-              window.location+'?uri=%s',
-              "Bunsen Browser");
-          } catch (err) {
-            // Transform dat:// Anchor tags to point at gateway.
-            // @TODO Remove me or check for non-subdomain supported gateway. No longer possible because dat sites are on seperate subdomains.
-            /*
+        static get properties() {
+            return {
+                isFocused: {
+                    type: Boolean,
+                    value: false
+                },
+                showInstallBanner: {
+                    type: Boolean,
+                    value: false
+                },
+                currentAddress: {
+                    type: String,
+                    value: ''
+                }
+            };
+        }
+
+        addArchive(key, secretKey, options, callback) {
+            const archiveList = this.getArchives()
+            try {
+                archiveList.push({
+                    key,
+                    secretKey,
+                    details: options
+                })
+            } catch (e) {
+                console.log('error: ' + e)
+            }
+            console.log('setting Archives for key: ' + key)
+            this.setArchives(archiveList)
+            callback()
+        }
+
+        selectArchive(options, callback) {
+            selectQueue.push({
+                options: options,
+                callback: callback
+            })
+
+            showNext()
+        }
+
+        setArchives(newList) {
+            try {
+                window.localStorage.archives = JSON.stringify(newList)
+            } catch (e) {
+                console.log('Error: ' + e)
+            }
+        }
+
+        getArchives() {
+            return JSON.parse(window.localStorage.archives || '[]')
+        }
+
+
+        async connectedCallback() {
+            super.connectedCallback()
+            window.addEventListener('hashchange', () => this.hashHasChanged())
+            // window.addEventListener('message', this.receiveMessage, false)
+            window.addEventListener('message',  (event) => this.receiveMessage(event), false)
+            this.gateway = `${window.location.protocol}//${window.location.host}`
+            console.log("Using the Dat polyfill")
+            this.socket2me();
+            // Handle focus on dat url input.
+            this.$.address.addEventListener('focusin', () => {
+                console.log("focusin")
+                this.showDatSites();
+            })
+            // Remove spaces that keyboards add after `.` character.
+            this.$.address.addEventListener('keyup', async (event) => {
+                event.target.value = event.target.value.replace(' ', '')
+            })
+
+            // Listen for submit of new URL.
+            this.$.address.addEventListener('keyup', async (event) => {
+                if (event.keyCode !== 13) return
+                this.openAddress(this.$.address.value)
+            })
+
+            // Fit iframe to window.
+            setInterval(() => {
+                this.$.view.style.height = `${window.innerHeight - 47}px`
+            }, 500)
+            // Adjustments for browsers that are not Bunsen.
+            if (!navigator.userAgent.includes('BunsenBrowser')) {
+                // Alert folks who are not using Bunsen.
+                if (!localStorage.getItem('suppressInstallBanner')) {
+                    // @TODO Show a hide button to set this to false.
+                    //this.showInstallBanner = true
+                }
+                try {
+                    // Register to handle dat:// links.
+                    navigator.registerProtocolHandler("dat",
+                        window.location + '?uri=%s',
+                        "Bunsen Browser");
+                } catch (err) {
+                    // Transform dat:// Anchor tags to point at gateway.
+                    // @TODO Remove me or check for non-subdomain supported gateway. No longer possible because dat sites are on seperate subdomains.
+                    /*
             setInterval(() => {
               this.$.view.contentDocument.querySelectorAll('a').forEach(anchorEl => {
                 let href = anchorEl.getAttribute('href')
@@ -155,179 +198,218 @@
               }, 500)
             })
             */
-          }
+                }
+
+            }
+
+            // Open an address to get started.
+            // Detect case of Firefox registered protocol handling.
+            if (window.location.search.includes('?uri=')) {
+                let frag = decodeURIComponent(window.location.search)
+                let datAddress = frag.substr(5, frag.length)
+                this.openAddress(datAddress)
+            } else if (window.location.hash !== '') {
+                this.hashHasChanged()
+            } else {
+                await this.openAddress('dat://home-bunsen.hashbase.io')
+                // const frame = document.getElementById('view')
+
+                const addArchive = this.addArchive
+                const selectArchive = this.selectArchive
+                const storage = idb('dat://storage')
+                const server = new RPC.Server(window, this.$.view.contentWindow, {
+                    storage,
+                    addArchive,
+                    selectArchive
+                })
+                window.gatewayServer = server
+                window.gatewayStorage = storage
+            }
+
 
         }
 
-        // Open an address to get started.
-        // Detect case of Firefox registered protocol handling.
-        if (window.location.search.includes('?uri=')) {
-          let frag = decodeURIComponent(window.location.search)
-          let datAddress = frag.substr(5, frag.length)
-          this.openAddress(datAddress)  
-        } else if (window.location.hash !== '') {
-          this.hashHasChanged()
-        } else {
-          this.openAddress('dat://home-bunsen.hashbase.io')
+
+        suppressInstallBanner() {
+            localStorage.setItem('suppressInstallBanner', true)
         }
 
-      }
+        showDatSites() {
+            const datSites = localStorage.getItem('datSites')
+            if (datSites) {
+                const datSiteItems = JSON.parse(datSites)
+                this.$.datSites.items = datSiteItems
+            } else {
+                localStorage.setItem('datSites', '[]')
+            }
+            this.isFocused = true
+            this.$.view.style.display = 'none'
+            this.$.datSites.style.display = 'block'
+            this.$.peerage.style.display = 'block'
 
-      suppressInstallBanner() {
-        localStorage.setItem('suppressInstallBanner', true)
-      }
+        }
 
-      showDatSites() {
-          const datSites = localStorage.getItem('datSites')
-          if (datSites) {
-              const datSiteItems = JSON.parse(datSites)
-              this.$.datSites.items = datSiteItems
-          } else {
-              localStorage.setItem('datSites', '[]')
-          }
-          this.isFocused = true
-          this.$.view.style.display = 'none'
-          this.$.datSites.style.display = 'block'
-          this.$.peerage.style.display = 'block'
-          
-      }
+        refresh() {
+            this.openAddress(this.currentAddress)
+        }
 
-      refresh() {
-        this.openAddress(this.currentAddress)
-      }
+        // async datCreateWiki() {
+        //     console.log('Forking wiki')
+        //     this.datForkArchive('dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1', 'My Wiki')
+        // }
 
-      async datCreateWiki() {
-          console.log('Forking wiki')
-          this.datForkArchive('dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1', 'My Wiki')
-      }
+        async addDat() {
+            // const searchBox = document.getElementById('search')
+            // const datAddress = searchBox.value
+            const datAddress = 'dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1'
+            console.log('added ' + datAddress)
+            this.$.view.contentWindow.postMessage(datAddress, '*')
+        }
 
-      async datForkArchive(url, title) {
-          console.log('Forking archive')
-          const archive = await DatArchive.fork(url)
-          console.log(`Opened, ${archive.url}`)
-          this.saveDatSite(archive.url, title, url);
-          console.log('Forked dat')
+        async datForkArchive(url, title) {
+            console.log('Forking archive')
+            const archive = await DatArchive.fork(url)
+            console.log(`Opened, ${archive.url}`)
+            this.saveDatSite(archive.url, title, url);
+            console.log('Forked dat')
 
-          const dir = await archive.readdir('/')
-          console.log('Read dir:', dir)
-          // const readContents = await archive.readFile('/index.html')
-          // console.log('Read contents', readContents)
-          // return archive.url
-          this.openAddress(archive.url)
-      }
+            const dir = await archive.readdir('/')
+            console.log('Read dir:', dir)
+            // const readContents = await archive.readFile('/index.html')
+            // console.log('Read contents', readContents)
+            // return archive.url
+            this.openAddress(archive.url)
+        }
 
-      // Lifted directly from dat-archive-web example
-      async datCreateArchive() {
-          const contents = `
+        // Lifted directly from dat-archive-web example
+        async datCreateArchive() {
+            const contents = `
             <title>Gateway Test</title>
             <p>Hello World!</p>
             `
-          console.log('Creating new archive')
-          const archive = await DatArchive.create({
-              title: 'Gateway test',
-              description: 'This is testing out creating new archives through the dat-gateway'
-          })
+            console.log('Creating new archive')
+            const archive = await DatArchive.create({
+                title: 'Gateway test',
+                description: 'This is testing out creating new archives through the dat-gateway'
+            })
 
-          console.log(`Opened, ${archive.url}`)
-          await archive.writeFile('index.html', contents)
-          console.log('Wrote index.html')
+            console.log(`Opened, ${archive.url}`)
+            await archive.writeFile('index.html', contents)
+            console.log('Wrote index.html')
 
-          const dir = await archive.readdir('/')
-          console.log('Read dir:', dir)
-          const readContents = await archive.readFile('/index.html')
-          console.log('Read contents', readContents)
-      }
+            const dir = await archive.readdir('/')
+            console.log('Read dir:', dir)
+            const readContents = await archive.readFile('/index.html')
+            console.log('Read contents', readContents)
+        }
 
-      hashHasChanged() {
-          let address = window.location.hash.substr(1, window.location.hash.length)
-          this.$.address.value = address
-          this.openAddress(address)
-      }
+        hashHasChanged() {
+            let address = window.location.hash.substr(1, window.location.hash.length)
+            this.$.address.value = address
+            this.openAddress(address)
+        }
 
-      async openAddress(address) {
-        this.currentAddress = address
-        this.$.address.value = address
-        
-        // Show some stuff, hide some stuff. @TODO Make this simpler, too much juggling.
-        this.$.datSites.style.display = 'none'
-        this.$.peerage.style.display = 'none'
-        this.$.view.style.display = 'block'
-        this.$.view.style.background = `white`
-        // Remove focus from address bar.
-        this.$.address.blur()
-        // this.saveDatSite(address, null, null);
-        this.saveDatSite(address, address);
-          // Check if the target uses Dat protocol, otherwise it's something weird like http ;).
-        let targetUrl = ''
-        if (address.substr(0,4) === 'dat:') {
-          // Remove protocol and all slashes to be used in gateway address.
-          let gatewayTarget = address.replace('dat://', '').replace('/', '')
-          // Remove the base32 of bunsen.hashbase.io if the subdomain is base32 length, otherwise we're 
-          // probbaly not running in a gateway with base32 subdomain support.
-          let gatewayParts = window.location.host.split('.')
-          if (gatewayParts[0].length === 52) {
-            gatewayParts.shift()
-          }
-          let gatewayRoot = gatewayParts.join('.')
-          targetUrl = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
-        } else {
-          targetUrl = address
-        } 
-        this.$.view.src = targetUrl 
-      }
+        async openAddress(address) {
+            this.currentAddress = address
+            this.$.address.value = address
 
-      saveDatSite(address, title, parent) {
-      // Save this address into datSites.
-          const datSites = localStorage.getItem('datSites')
-          if (datSites) {
-              const datSiteItems = JSON.parse(datSites)
-              let hasAddress = false
-              for (var key in datSiteItems) {
-                  if (datSiteItems.hasOwnProperty(key)) {
-                      console.log(key + " -> " + JSON.stringify(datSiteItems[key]));
-                      if (datSiteItems[key].address === address) {
-                          hasAddress = true
-                      }
-                  }
-              }
-              if (!hasAddress) {
-                  datSiteItems.unshift({address: address, title:title, parent:parent})
-                  this.$.datSites.items = datSiteItems
-                  localStorage.setItem('datSites', JSON.stringify(datSiteItems))
-              }
-          } else {
-              localStorage.setItem('datSites', `[{"address": "${address}", "title": "${title}", "parent": "${parent}"}]`)
-          }
-      }
-      clearAddress() {
-        this.$.address.value = ''
-        // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
-        setTimeout(() => {
-          this.$.address.focus()
-          this.showDatSites()
-        }, 200)
-      }
+            // Show some stuff, hide some stuff. @TODO Make this simpler, too much juggling.
+            this.$.datSites.style.display = 'none'
+            this.$.peerage.style.display = 'none'
+            this.$.view.style.display = 'block'
+            this.$.view.style.background = `white`
+            // Remove focus from address bar.
+            this.$.address.blur()
+            // this.saveDatSite(address, null, null);
+            this.saveDatSite(address, address);
+            // Check if the target uses Dat protocol, otherwise it's something weird like http ;).
+            let targetUrl = ''
+            if (address.substr(0, 4) === 'dat:') {
+                // Remove protocol and all slashes to be used in gateway address.
+                let gatewayTarget = address.replace('dat://', '').replace('/', '')
+                // Remove the base32 of bunsen.hashbase.io if the subdomain is base32 length, otherwise we're
+                // probbaly not running in a gateway with base32 subdomain support.
+                let gatewayParts = window.location.host.split('.')
+                if (gatewayParts[0].length === 52) {
+                    gatewayParts.shift()
+                }
+                let gatewayRoot = gatewayParts.join('.')
+                targetUrl = `${window.location.protocol}//${gatewayRoot}/${gatewayTarget}/`
+            } else {
+                targetUrl = address
+            }
+            this.$.view.src = targetUrl
+        }
 
-      socket2me() {
-          const wsUrl = `ws://localhost:3000/peers`
-          const socket = websocketStream(wsUrl, null, null)
-          // var stream = ws('ws://localhost:8343')
-          let that = this;
-          socket.on('data', function (rawMsg) {
-              console.log("got message: " + rawMsg);
-              var str = String.fromCharCode.apply(null, rawMsg);
-              let msgArray = str.split(":");
-              let uuid = msgArray[0].substring(0, 6);
-              let count = msgArray[msgArray.length-1];
-              let formattedMsg = uuid + ": " + count + " peers";
-              // let ws = document.querySelector('#peers');
-              let ws = that.$.peers;
-              ws.innerHTML = formattedMsg;
-              socket.destroy()
-          })
-          socket.write('hello');
-      }
+        saveDatSite(address, title, parent) {
+            // Save this address into datSites.
+            const datSites = localStorage.getItem('datSites')
+            if (datSites) {
+                const datSiteItems = JSON.parse(datSites)
+                let hasAddress = false
+                for (var key in datSiteItems) {
+                    if (datSiteItems.hasOwnProperty(key)) {
+                        console.log(key + " -> " + JSON.stringify(datSiteItems[key]));
+                        if (datSiteItems[key].address === address) {
+                            hasAddress = true
+                        }
+                    }
+                }
+                if (!hasAddress) {
+                    datSiteItems.unshift({address: address, title: title, parent: parent})
+                    this.$.datSites.items = datSiteItems
+                    localStorage.setItem('datSites', JSON.stringify(datSiteItems))
+                }
+            } else {
+                localStorage.setItem('datSites', `[{"address": "${address}", "title": "${title}", "parent": "${parent}"}]`)
+            }
+        }
+
+        clearAddress() {
+            this.$.address.value = ''
+            // Focus back after 200 milliseconds. Delay is a quirk of animations in paper-input.
+            setTimeout(() => {
+                this.$.address.focus()
+                this.showDatSites()
+            }, 200)
+        }
+
+        socket2me() {
+            const wsUrl = `ws://localhost:3000/peers`
+            const socket = websocketStream(wsUrl, null, null)
+            // var stream = ws('ws://localhost:8343')
+            let that = this;
+            socket.on('data', function (rawMsg) {
+                console.log("got message: " + rawMsg);
+                var str = String.fromCharCode.apply(null, rawMsg);
+                let msgArray = str.split(":");
+                let uuid = msgArray[0].substring(0, 6);
+                let count = msgArray[msgArray.length - 1];
+                let formattedMsg = uuid + ": " + count + " peers";
+                // let ws = document.querySelector('#peers');
+                let ws = that.$.peers;
+                ws.innerHTML = formattedMsg;
+                socket.destroy()
+            })
+            socket.write('hello');
+        }
+
+        async receiveMessage(event) {
+            console.log("received message in parent: " + event)
+            let data = event.data
+            if (typeof data === 'string' && data.startsWith('dat:')) {
+                let datAddress = data
+                try {
+                    console.log("child told me that this dat was forked:" + datAddress)
+                    alert("Wiki forked and saved locally. \nAccess it in the site listing by pressing the button to the right of the url box.")
+                    this.saveDatSite(datAddress, 'My Wiki', datAddress);
+                } catch (e) {
+                    console.log('Error: ' + e)
+                }
+            }
+        }
     }
+
 
     window.customElements.define(BunsenApp.is, BunsenApp);
   </script>
