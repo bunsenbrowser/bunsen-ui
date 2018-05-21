@@ -27,9 +27,10 @@
   "dependencies": {
     "frame-rpc": "^1.4.0",
     "random-access-file": "^2.0.1",
+    "random-access-idb": "https://github.com/random-access-storage/random-access-idb",
     "random-access-network": "^1.0.5",
     "random-access-storage": "^1.1.1",
-    "random-access-idb": "https://github.com/random-access-storage/random-access-idb"
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "browserify": "^16.2.0",

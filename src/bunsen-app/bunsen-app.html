@@ -395,8 +395,8 @@
         }
 
         async receiveMessage(event) {
-            console.log("received message in parent: " + event)
             let data = event.data
+            console.log("received message in parent: " + data)
             if (typeof data === 'string' && data.startsWith('dat:')) {
                 let datAddress = data
                 try {
