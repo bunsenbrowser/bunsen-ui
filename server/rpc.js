@@ -1,5 +1,5 @@
 const { RAN, NoopTransport, RasBridge } = require('random-access-network')
-var randomAccess = require('random-access-storage')
+// var randomAccess = require('random-access-storage')
 const RPC = require('frame-rpc')
 
 const ANY_ORIGIN = '*'

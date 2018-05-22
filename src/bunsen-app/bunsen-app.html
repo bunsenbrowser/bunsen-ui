@@ -57,7 +57,7 @@
         </tr>
       </tbody>
     </table>
-    <iframe id="view" style="width:100%" sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-orientation-lock allow-presentation" allowfullscreen allowpaymentrequest></iframe>
+    <iframe id="view" style="width:100%"></iframe>
     <bunsen-dats id="datSites"></bunsen-dats>
     <div id="peerage">
       <p style="margin: 5px">Peers</p>
@@ -124,12 +124,7 @@
         }
 
         selectArchive(options, callback) {
-            selectQueue.push({
-                options: options,
-                callback: callback
-            })
-
-            showNext()
+            console.log("Why was selectArchive called?")
         }
 
         setArchives(newList) {
@@ -152,7 +147,7 @@
             window.addEventListener('message',  (event) => this.receiveMessage(event), false)
             this.gateway = `${window.location.protocol}//${window.location.host}`
             console.log("Using the Dat polyfill")
-            this.socket2me();
+            // this.socket2me();
             // Handle focus on dat url input.
             this.$.address.addEventListener('focusin', () => {
                 console.log("focusin")
@@ -214,16 +209,16 @@
                 await this.openAddress('dat://home-bunsen.hashbase.io')
                 // const frame = document.getElementById('view')
 
-                const addArchive = this.addArchive
-                const selectArchive = this.selectArchive
-                const storage = idb('dat://storage')
-                const server = new RPC.Server(window, this.$.view.contentWindow, {
-                    storage,
-                    addArchive,
-                    selectArchive
-                })
-                window.gatewayServer = server
-                window.gatewayStorage = storage
+                // const addArchive = this.addArchive
+                // const selectArchive = this.selectArchive
+                // const storage = idb('dat://storage')
+                // const server = new RPC.Server(window, this.$.view.contentWindow, {
+                //     storage,
+                //     addArchive,
+                //     selectArchive
+                // })
+                // window.gatewayServer = server
+                // window.gatewayStorage = storage
             }
 
 
@@ -253,54 +248,18 @@
             this.openAddress(this.currentAddress)
         }
 
-        // async datCreateWiki() {
-        //     console.log('Forking wiki')
-        //     this.datForkArchive('dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1', 'My Wiki')
-        // }
 
         async addDat() {
+            console.log("Forking dat.")
             // const searchBox = document.getElementById('search')
             // const datAddress = searchBox.value
-            const datAddress = 'dat://528691905866112c90eea949bcc0712c208f0ac0803d38312dc18cfa7fda82d1'
-            console.log('added ' + datAddress)
-            this.$.view.contentWindow.postMessage(datAddress, '*')
-        }
-
-        async datForkArchive(url, title) {
-            console.log('Forking archive')
-            const archive = await DatArchive.fork(url)
-            console.log(`Opened, ${archive.url}`)
-            this.saveDatSite(archive.url, title, url);
-            console.log('Forked dat')
-
-            const dir = await archive.readdir('/')
-            console.log('Read dir:', dir)
-            // const readContents = await archive.readFile('/index.html')
-            // console.log('Read contents', readContents)
-            // return archive.url
-            this.openAddress(archive.url)
-        }
-
-        // Lifted directly from dat-archive-web example
-        async datCreateArchive() {
-            const contents = `
-            <title>Gateway Test</title>
-            <p>Hello World!</p>
-            `
-            console.log('Creating new archive')
-            const archive = await DatArchive.create({
-                title: 'Gateway test',
-                description: 'This is testing out creating new archives through the dat-gateway'
-            })
-
-            console.log(`Opened, ${archive.url}`)
-            await archive.writeFile('index.html', contents)
-            console.log('Wrote index.html')
-
-            const dir = await archive.readdir('/')
-            console.log('Read dir:', dir)
-            const readContents = await archive.readFile('/index.html')
-            console.log('Read contents', readContents)
+            const datAddress = 'dat://wysiwywiki-bunsen.hashbase.io'
+            // console.log('added ' + datAddress)
+            // this.$.view.contentWindow.postMessage(datAddress, '*')
+            let forkedArchive = await DatArchive.fork(datAddress)
+            let url = forkedArchive.url;
+            console.log('we forked to', url)
+            this.messageDatForked(url);
         }
 
         hashHasChanged() {
@@ -398,14 +357,18 @@
             let data = event.data
             console.log("received message in parent: " + data)
             if (typeof data === 'string' && data.startsWith('dat:')) {
-                let datAddress = data
-                try {
-                    console.log("child told me that this dat was forked:" + datAddress)
-                    alert("Wiki forked and saved locally. \nAccess it in the site listing by pressing the button to the right of the url box.")
-                    this.saveDatSite(datAddress, 'My Wiki', datAddress);
-                } catch (e) {
-                    console.log('Error: ' + e)
-                }
+                this.messageDatForked(data);
+            }
+        }
+
+        messageDatForked(data) {
+            let datAddress = data
+            try {
+                console.log("child told me that this dat was forked:" + datAddress)
+                alert("Wiki forked and saved locally. \nAccess it in the site listing by pressing the button to the right of the url box.")
+                this.saveDatSite(datAddress, 'My Wiki', datAddress);
+            } catch (e) {
+                console.log('Error: ' + e)
             }
         }
     }
