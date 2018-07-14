@@ -207,6 +207,10 @@
                 this.hashHasChanged()
             } else {
                 await this.openAddress('dat://home-bunsen.hashbase.io')
+                let archive = await DatArchive.selectArchive({})
+                await archive._loadPromise
+                let url = archive.url
+                console.log('primed selectArchive for ' + url)
                 // const frame = document.getElementById('view')
 
                 // const addArchive = this.addArchive
