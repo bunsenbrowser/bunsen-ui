@@ -54,7 +54,8 @@
         </tr>
       </tbody>
     </table>
-    <iframe id="view" style="width:100%" sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-orientation-lock allow-presentation" allowfullscreen allowpaymentrequest></iframe>
+    <!--<iframe id="view" style="width:100%" sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-orientation-lock allow-presentation" allowfullscreen allowpaymentrequest></iframe>-->
+    <iframe id="view" style="width:100%"></iframe>
     <bunsen-dats id="datSites"></bunsen-dats>
     <div id="peerage">
       <p style="margin: 5px">Peers</p>
@@ -259,7 +260,8 @@
       }
 
       socket2me() {
-          const wsUrl = `ws://localhost:3000/peers`
+          // const wsUrl = `ws://localhost:3000/peers`
+          const wsUrl = `ws://localhost:3001/peerList`
           const socket = websocketStream(wsUrl, null, null)
           // var stream = ws('ws://localhost:8343')
           let that = this;
@@ -268,12 +270,13 @@
               var str = String.fromCharCode.apply(null, rawMsg);
               let msgArray = str.split(":");
               let uuid = msgArray[0].substring(0, 6);
-              let count = msgArray[msgArray.length-1];
-              let formattedMsg = uuid + ": " + count + " peers";
+              // let count = msgArray[msgArray.length-1];
+              // let formattedMsg = uuid + ": " + count + " peers";
               // let ws = document.querySelector('#peers');
               let ws = that.$.peers;
-              ws.innerHTML = formattedMsg;
-              socket.destroy()
+              // ws.innerHTML = formattedMsg;
+              ws.innerHTML = str;
+              // socket.destroy()
           })
           socket.write('hello');
       }
